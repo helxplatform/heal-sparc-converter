@@ -30,7 +30,7 @@ def map_predicates(edges):
         ':http://uri.interlex.org/temp/uris/hasAge': 'biolink:related_to',
         ':http://uri.interlex.org/temp/uris/hasAwardNumber': 'biolink:related_to',
         ':http://uri.interlex.org/temp/uris/hasContactPerson': 'biolink:related_to',
-        ':http://uri.interlex.org/temp/uris/hasDerivedInformationAsParticipant': ' biolink:related_to',
+        ':http://uri.interlex.org/temp/uris/hasDerivedInformationAsParticipant': 'biolink:related_to',
         ':http://uri.interlex.org/temp/uris/hasDoi': 'biolink:publications',
         ':http://uri.interlex.org/temp/uris/hasHumanUri': 'biolink:related_to',
         ':http://uri.interlex.org/temp/uris/hasProtocol': 'biolink:related_to',
