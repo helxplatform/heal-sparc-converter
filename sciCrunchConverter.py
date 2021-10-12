@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import sys
+import os
 import json
 import xml.etree.ElementTree as ET
 
@@ -8,6 +9,13 @@ def main(args):
 
     print (args.inputFile)
     json_blob = scicrunch_raw_to_json(args.inputFile)
+
+    # create the output dir if it does not already exist.
+    outDirExists = os.path.exists(args.outputDir)
+
+    if not outDirExists:
+       # Create a new directory because it does not exist 
+        os.makedirs(args.outputDir)
 
     for dataset in json_blob:
         # Transform to dbGaP XML
@@ -33,7 +41,7 @@ def scicrunch_raw_to_json(inputFile):
                 {
                     "variable_id": ,   dataset_id.v1
                     "variable_name": , from the organ, species and keyword fields
-                    "variable_description": none
+                    "variable_description": same as the variable_name
                 },
             ]
         },
@@ -73,7 +81,7 @@ def scicrunch_raw_to_json(inputFile):
              variable['variable_id'] = hitList[i]["_id"] + ".v" + str(j + 1)
              print (hitList[i]["_source"]["item"]["keywords"][j]["keyword"])
              variable['variable_name'] = hitList[i]["_source"]["item"]["keywords"][j]["keyword"]
-             variable['variable_description'] = ""
+             variable['variable_description'] = hitList[i]["_source"]["item"]["keywords"][j]["keyword"]
              dataset['variables'].append(variable)
        except KeyError:   
           print("No keywords in this dataset")
@@ -85,7 +93,7 @@ def scicrunch_raw_to_json(inputFile):
           j = j + 1
           variable['variable_id'] = hitList[i]["_id"] + ".v" + str(j + 1)
           variable['variable_name'] = hitList[i]["_source"]["anatomy"]["organ"][0]["curie"]
-          variable['variable_description'] = ""
+          variable['variable_description'] = hitList[i]["_source"]["anatomy"]["organ"][0]["curie"]
           dataset['variables'].append(variable)
 
        except KeyError:
@@ -97,7 +105,7 @@ def scicrunch_raw_to_json(inputFile):
           j = j + 1
           variable['variable_id'] = hitList[i]["_id"] + ".v" + str(j + 1)
           variable['variable_name'] = hitList[i]["_source"]["organisms"]["subject"][0]["species"]["curie"]
-          variable['variable_description'] = ""
+          variable['variable_description'] = hitList[i]["_source"]["organisms"]["subject"][0]["species"]["curie"]
           dataset['variables'].append(variable)
 
        except KeyError:
