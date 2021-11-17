@@ -25,7 +25,7 @@ def main(args):
         # Write xml.  Note we use the str function to replace any unicode characters
         study_id = str(dataset['study_id'].replace("/","-"))
         filename = str(f"{args.outputDir}/{study_id}.xml")
-        dataset_xml.write(filename)
+        dataset_xml.write(filename, encoding="UTF-8",xml_declaration=True)
 
 def scicrunch_raw_to_json(inputFile):
     '''
@@ -74,7 +74,6 @@ def scicrunch_raw_to_json(inputFile):
              dataset['study_name'] = str(hitList[i]["_source"]["objects"][0]["name"])
           except KeyError:
              print("No name for this dataset")
-
        
        # Now for the variables
        dataset['variables'] = []
