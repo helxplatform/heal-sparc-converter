@@ -22,9 +22,9 @@ def main(args):
         dataset_xml = json_to_dbgap_xml(dataset)
         # Format XML
         ET.indent(dataset_xml)
-        # Write xml
-        study_id = dataset['study_id'].replace("/","-")
-        filename = f"{args.outputDir}/{study_id}.xml"
+        # Write xml.  Note we use the str function to replace any unicode characters
+        study_id = str(dataset['study_id'].replace("/","-"))
+        filename = str(f"{args.outputDir}/{study_id}.xml")
         dataset_xml.write(filename)
 
 def scicrunch_raw_to_json(inputFile):
@@ -61,12 +61,19 @@ def scicrunch_raw_to_json(inputFile):
        dataset = {}
 
        # First set up the dataset metadata
-       dataset['study_id'] = hitList[i]["_id"]
-       dataset['dataset_id'] = hitList[i]["_id"]
+       dataset['study_id'] = str(hitList[i]["_id"])
+       dataset['dataset_id'] = str(hitList[i]["_id"])
+
+       # look for study name in 2 different places
        try:
-          dataset['dataset_name'] = hitList[i]["_source"]["item"]["name"]
+          # This seems to be used for papers
+          dataset['study_name'] = str(hitList[i]["_source"]["item"]["name"])
        except KeyError:
-          print("No name in this dataset")
+          try:
+             # This seems to be used for datasets
+             dataset['study_name'] = str(hitList[i]["_source"]["objects"][0]["name"])
+          except KeyError:
+             print("No name for this dataset")
 
        
        # Now for the variables
@@ -78,10 +85,10 @@ def scicrunch_raw_to_json(inputFile):
        try:
           for j in range(len(hitList[i]["_source"]["item"]["keywords"])):
              variable = {}
-             variable['variable_id'] = hitList[i]["_id"] + ".v" + str(j + 1)
+             variable['variable_id'] = str(hitList[i]["_id"] + ".v" + str(j + 1))
              print (hitList[i]["_source"]["item"]["keywords"][j]["keyword"])
-             variable['variable_name'] = hitList[i]["_source"]["item"]["keywords"][j]["keyword"]
-             variable['variable_description'] = hitList[i]["_source"]["item"]["keywords"][j]["keyword"]
+             variable['variable_name'] = str(hitList[i]["_source"]["item"]["keywords"][j]["keyword"])
+             variable['variable_description'] = str(hitList[i]["_source"]["item"]["keywords"][j]["keyword"])
              dataset['variables'].append(variable)
        except KeyError:   
           print("No keywords in this dataset")
@@ -91,9 +98,9 @@ def scicrunch_raw_to_json(inputFile):
        try:
           variable = {}
           j = j + 1
-          variable['variable_id'] = hitList[i]["_id"] + ".v" + str(j + 1)
-          variable['variable_name'] = hitList[i]["_source"]["anatomy"]["organ"][0]["curie"]
-          variable['variable_description'] = hitList[i]["_source"]["anatomy"]["organ"][0]["curie"]
+          variable['variable_id'] = str(hitList[i]["_id"] + ".v" + str(j + 1))
+          variable['variable_name'] = str(hitList[i]["_source"]["anatomy"]["organ"][0]["curie"])
+          variable['variable_description'] = str(hitList[i]["_source"]["anatomy"]["organ"][0]["curie"])
           dataset['variables'].append(variable)
 
        except KeyError:
@@ -103,9 +110,9 @@ def scicrunch_raw_to_json(inputFile):
        try:
           variable = {}
           j = j + 1
-          variable['variable_id'] = hitList[i]["_id"] + ".v" + str(j + 1)
-          variable['variable_name'] = hitList[i]["_source"]["organisms"]["subject"][0]["species"]["curie"]
-          variable['variable_description'] = hitList[i]["_source"]["organisms"]["subject"][0]["species"]["curie"]
+          variable['variable_id'] = str(hitList[i]["_id"] + ".v" + str(j + 1))
+          variable['variable_name'] = str(hitList[i]["_source"]["organisms"]["subject"][0]["species"]["curie"])
+          variable['variable_description'] = str(hitList[i]["_source"]["organisms"]["subject"][0]["species"]["curie"])
           dataset['variables'].append(variable)
 
        except KeyError:
@@ -135,6 +142,10 @@ def json_to_dbgap_xml(dataset):
     root = ET.Element("data_table")
     root.set("id",dataset["dataset_id"])
     root.set("study_id",dataset["study_id"])
+    try:
+       root.set("study_name",dataset["study_name"])
+    except KeyError:   
+       print("No study_name in this dataset", dataset)
 
     # Loop over each variable
     for var_dict in dataset['variables']:
