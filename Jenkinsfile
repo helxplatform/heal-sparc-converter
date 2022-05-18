@@ -49,7 +49,7 @@ spec:
                 BUILD_NUMBER = "${env.BUILD_NUMBER}"
             }
             steps {
-                container('agent-docker') {
+                container(name: 'kaniko', shell: '/busybox/sh') {
                     sh '''
                     /kaniko/executor --dockerfile Dockerfile \
                         --context . \
