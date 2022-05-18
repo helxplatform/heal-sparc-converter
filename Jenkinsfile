@@ -17,11 +17,11 @@ spec:
       requests:
         cpu: "500m"
         memory: "1024Mi"
-        ephemeral-storage: "5Gi"
+        ephemeral-storage: "4Gi"
       limits:
         cpu: "1000m"
         memory: "1024Mi"
-        ephemeral-storage: "5Gi"
+        ephemeral-storage: "4Gi"
     command:
     - /busybox/cat
     tty: true
