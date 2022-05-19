@@ -20,7 +20,7 @@ spec:
         ephemeral-storage: "4000Mi"
       limits:
         cpu: "1000m"
-        memory: "1024Mi"
+        memory: "2048Mi"
         ephemeral-storage: "4000Mi"
     command:
     - /busybox/cat
