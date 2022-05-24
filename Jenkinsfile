@@ -1,58 +1,59 @@
 pipeline {
     agent {
         kubernetes {
-            cloud 'kubernetes'
             yaml '''
-              apiVersion: v1
-              kind: Pod
-              spec:
-                containers:
-                - name: agent-docker
-                  image: helxplatform/agent-docker:latest
-                  command:
-                  - cat
-                  tty: true
-                  volumeMounts:
-                    - name: dockersock
-                      mountPath: "/var/run/docker.sock"
-                volumes:
-                - name: dockersock
-                  hostPath:
-                    path: /var/run/docker.sock
-            '''
+kind: Pod
+metadata:
+  name: kaniko
+spec:
+  containers:
+  - name: jnlp
+    workingDir: /home/jenkins/agent
+  - name: kaniko
+    workingDir: /home/jenkins/agent
+    image: gcr.io/kaniko-project/executor:debug
+    imagePullPolicy: Always
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1024Mi"
+        ephemeral-storage: "4000Mi"
+      limits:
+        cpu: "1000m"
+        memory: "2048Mi"
+        ephemeral-storage: "4000Mi"
+    command:
+    - /busybox/cat
+    tty: true
+    volumeMounts:
+    - name: jenkins-docker-cfg
+      mountPath: /kaniko/.docker
+  volumes:
+  - name: jenkins-docker-cfg
+    projected:
+      sources:
+      - secret:
+          name: rencibuild-imagepull-secret
+          items:
+            - key: .dockerconfigjson
+              path: config.json
+'''
         }
     }
     stages {
-        stage('Install') {
-            steps {
-                container('agent-docker') {
-                    sh '''
-                    make install
-                    '''
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                container('agent-docker') {
-                    sh '''
-                    make test
-                    '''
-                }
-            }
-        }
-        stage('Publish') {
-            when {
-                buildingTag()
-            }
+        stage('Build and Push Image') {
             environment {
-                DOCKERHUB_CREDS = credentials('rencibuild_dockerhub_machine_user')
+                PATH = "/busybox:/kaniko:$PATH"
+                DOCKERHUB_CREDS = credentials("${env.REGISTRY_CREDS_ID_STR}")
+                DOCKER_REGISTRY = "${env.DOCKER_REGISTRY}"
+                BUILD_NUMBER = "${env.BUILD_NUMBER}"
             }
             steps {
-                container('agent-docker') {
+                container(name: 'kaniko', shell: '/busybox/sh') {
                     sh '''
-                    echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-                    make publish
+                    /kaniko/executor --dockerfile Dockerfile \
+                        --context . \
+                        --destination helxplatform/heal-sparc-converter:new-jenkins-test-$BUILD_NUMBER
                     '''
                 }
             }

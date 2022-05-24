@@ -14,7 +14,7 @@ RUN mkdir -p /usr/local/renci/data
 RUN apt-get update && \
     apt-get install -y openjdk-11-jdk wget && \
     cd /usr/local && \
-    wget https://apache.claz.org/jena/binaries/apache-jena-4.1.0.tar.gz && \
+    wget https://archive.apache.org/dist/jena/binaries/apache-jena-4.1.0.tar.gz && \
     tar xvfz apache-jena-4.1.0.tar.gz && \
     pip3 install kgx && \
     rm -rf /var/cache/apk/*
