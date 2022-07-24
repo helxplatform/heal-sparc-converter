@@ -1,7 +1,8 @@
+library 'pipeline-utils@master'
+
 pipeline {
     agent {
         kubernetes {
-           label 'kaniko-build-agent'
             yaml '''
 kind: Pod
 metadata:
@@ -17,12 +18,12 @@ spec:
     resources:
       requests:
         cpu: "500m"
-        memory: "1024Mi"
-        ephemeral-storage: "4000Mi"
+        memory: "1Gi"
+        ephemeral-storage: "4Gi"
       limits:
         cpu: "1000m"
-        memory: "2048Mi"
-        ephemeral-storage: "4000Mi"
+        memory: "2Gi"
+        ephemeral-storage: "4Gi"
     command:
     - /busybox/cat
     tty: true
@@ -61,6 +62,7 @@ spec:
         TAG1="$BRANCH_NAME"
         TAG2="$COMMIT_HASH"
         TAG3="$VERSION"
+        TAG4="latest"
     }
     stages {
         stage('Test') {
@@ -72,17 +74,10 @@ spec:
         }
         stage('Build') {
             steps {
-                container(name: 'kaniko', shell: '/busybox/sh') {
-                    sh '''#!/busybox/sh
-                        echo "Stage build"
-                        /kaniko/executor --dockerfile ./Dockerfile \
-                                         --context . \
-                                         --verbosity debug \
-                                         --no-push \
-                                         --destination $IMAGE_NAME:$TAG1 \
-                                         --destination $IMAGE_NAME:$TAG2 \
-                                         --tarPath image.tar
-                        '''
+                script {
+                    container(name: 'kaniko', shell: '/busybox/sh') {
+                        kaniko.build("./Dockerfile", ["$IMAGE_NAME:$TAG1", "$IMAGE_NAME:$TAG2", "$IMAGE_NAME:$TAG3", "$IMAGE_NAME:$TAG4"])
+                    }
                 }
             }
             post {
@@ -93,13 +88,13 @@ spec:
         }
         stage('Publish') {
             steps {
-                container(name: 'crane', shell: '/busybox/sh') {
-                    sh '''
-                    echo "Stage publish"
-                    echo "$DOCKERHUB_CREDS_PSW" | crane auth login -u $DOCKERHUB_CREDS_USR --password-stdin $REGISTRY
-                    crane push image.tar $IMAGE_NAME:$TAG1
-                    crane push image.tar $IMAGE_NAME:$TAG2
-                    '''
+                script {
+                    container(name: 'crane', shell: '/busybox/sh') {
+                        def imageTagsToPushAlways = ["$IMAGE_NAME:$TAG1", "$IMAGE_NAME:$TAG2"]
+                        def imageTagsToPushForDevelopBranch = ["$IMAGE_NAME:$TAG3"]
+                        def imageTagsToPushForMasterBranch = ["$IMAGE_NAME:$TAG4"]
+                        image.publish(imageTagsToPushAlways, imageTagsToPushForDevelopBranch, imageTagsToPushForMasterBranch)
+                    }
                 }
             }
             post {
